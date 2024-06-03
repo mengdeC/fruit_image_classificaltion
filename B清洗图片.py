@@ -14,9 +14,9 @@ from tqdm import tqdm
 
 dataset_path = 'dataset' # 数据集路径
 
-for animal in tqdm(os.listdir(dataset_path)):
-    for file in os.listdir(os.path.join(dataset_path, animal)):
-        file_path = os.path.join(dataset_path, animal, file)
+for fruit in tqdm(os.listdir(dataset_path)):
+    for file in os.listdir(os.path.join(dataset_path, fruit)):
+        file_path = os.path.join(dataset_path, fruit, file)
         img = cv2.imread(file_path)
         if img is None:
             print(file_path, '读取错误，删除')
