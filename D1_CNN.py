@@ -40,7 +40,7 @@ import numpy as np
 batch_size = 16
 learning_rate = 0.001
 epochs = 30
-num_classes = 5
+num_classes = 10
 
 # 数据预处理：转换为torch张量，并标准化
 transform = transforms.Compose([
@@ -61,9 +61,9 @@ test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=Fa
 
 
 # 定义卷积神经网络模型（使用预训练的ResNet18模型）
-class AnimalNet(nn.Module):
+class FruitNet(nn.Module):
     def __init__(self, num_classes):
-        super(AnimalNet, self).__init__()
+        super(FruitNet, self).__init__()
         self.model = models.resnet18(pretrained=True)  # 使用预训练的ResNet18模型
 
         # 冻结预训练模型的参数
@@ -88,20 +88,34 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f'Using {device} device')
 
 # 创建模型实例并移动到设备
-model = AnimalNet(num_classes=num_classes).to(device)
+model = FruitNet(num_classes=num_classes).to(device)
 criterion = nn.CrossEntropyLoss()  # 交叉熵损失函数
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)  # Adam优化器
 
-# 定义学习率调度器
-'''
-ReduceLROnPlateau 72%
-StepLR            70%  
-ExponentialLR     70%
+# 定义学习率调度器 88%
+# lr_scheduler：学习率调度器
+# ReduceLROnPlateau：减少学习率调度器
+# 参数optimizer：优化器
+# mode='max'：模式，以最大化指标为准
+# factor=0.5：因子，以0.5为步长下降
+# patience=2：容忍度，当指标不再改善的次数
+# verbose=True：是否打印信息
+lr_scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=2, verbose=True)
 
-'''
-# scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=2, verbose=True)
-# scheduler = StepLR(optimizer, step_size=3, gamma=0.5)
-scheduler = ExponentialLR(optimizer, gamma=0.95)
+# 定义步长调度器 85%
+# step_scheduler：步长调度器
+# StepLR：步长调度器
+# 参数optimizer：优化器
+# step_size=3：步长，以3为步长
+# gamma=0.5：因子，以0.5为步长下降
+step_scheduler = StepLR(optimizer, step_size=3, gamma=0.5)
+
+# 定义指数调度器 86%
+# exp_scheduler：指数调度器
+# ExponentialLR：指数调度器
+# 参数optimizer：优化器
+# gamma=0.95：因子，以0.95为指数下降
+exp_scheduler = ExponentialLR(optimizer, gamma=0.95)
 
 # 训练模型
 for epoch in range(epochs):
@@ -144,8 +158,9 @@ print("CNN Classification Report")
 print(classification_report(all_labels, all_preds, target_names=train_dataset.classes))
 
 # 更新学习率
-# scheduler.step(cnn_accuracy)
-scheduler.step()
+lr_scheduler.step(cnn_accuracy)
+#step_scheduler.step()
+#exp_scheduler.step()
 
 # 保存模型
 # torch.save(model.state_dict(), 'cnn_fruit_classifier.pth')

@@ -30,7 +30,7 @@ print(f'Using {device} device')
 
 # 定义超参数
 batch_size = 16 # 批量大小
-num_classes = 5 # 类别数
+num_classes = 10 # 类别数
 
 # 数据预处理：转换为torch张量，并标准化
 transform = transforms.Compose([

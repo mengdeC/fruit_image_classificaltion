@@ -162,6 +162,6 @@ if __name__ == '__main__':
     craw_single_class('watermelon', DOWNLOAD_NUM=200)  # 爬取200张
 
     # 爬取多类
-    class_list = ['banana', 'orange', 'grape',  'strawberry']
+    class_list = ['banana', 'pineapple', 'longan',  'strawberry']
     for each in class_list:
         craw_single_class(each, DOWNLOAD_NUM=200)
