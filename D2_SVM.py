@@ -40,8 +40,8 @@ transform = transforms.Compose([
 ])
 
 # 加载训练数据和测试数据
-train_dataset = datasets.ImageFolder(root='dataset_split/test', transform=transform)
-test_dataset = datasets.ImageFolder(root='dataset_split/train', transform=transform)
+train_dataset = datasets.ImageFolder(root='fruitdatasets_split/train', transform=transform)
+test_dataset = datasets.ImageFolder(root='fruitdatasets_split/test', transform=transform)
 
 # 创建数据加载器
 train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)

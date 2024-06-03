@@ -13,7 +13,7 @@ import shutil
 import random
 import pandas as pd
 
-dataset_path = 'dataset' # 指定数据集路径
+dataset_path = 'fruitdatasets' # 指定数据集路径
 
 dataset_name = dataset_path.split('_')[0] # 获取数据集名称
 

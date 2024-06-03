@@ -159,9 +159,22 @@ def craw_single_class(keyword, DOWNLOAD_NUM):
 
 if __name__ == '__main__':
     # 爬取一类
-    craw_single_class('watermelon', DOWNLOAD_NUM=200)  # 爬取200张
+    craw_single_class('Litchi', DOWNLOAD_NUM=200)  # 爬取200张
 
     # 爬取多类
-    class_list = ['banana', 'pineapple', 'longan',  'strawberry']
+    class_list = ['Longan', 'Pineapple', 'Mango',  'Banana']
     for each in class_list:
         craw_single_class(each, DOWNLOAD_NUM=200)
+
+'''
+荔枝 (Litchi)
+龙眼 (Longan)
+菠萝 (Pineapple)
+芒果 (Mango)
+香蕉 (Banana)
+火龙果 (Dragon Fruit or Pitaya)
+椰子 (Coconut)
+柚子 (Pomelo)
+杨梅 (Chinese Bayberry or Waxberry)
+沙糖桔(Kumquat)
+'''
