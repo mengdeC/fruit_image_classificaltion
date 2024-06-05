@@ -39,7 +39,7 @@ import numpy as np
 # 定义超参数
 batch_size = 16
 learning_rate = 0.001
-epochs = 30
+epochs = 50
 num_classes = 10
 
 # 数据预处理：转换为torch张量，并标准化
@@ -48,6 +48,8 @@ transform = transforms.Compose([
     transforms.RandomHorizontalFlip(),  # 随机水平翻转
     transforms.RandomRotation(10),  # 随机旋转
     transforms.RandomVerticalFlip(),  # 随机垂直翻转
+    transforms.RandomAffine(10),  # 随机仿射变换
+    transforms.GaussianBlur(kernel_size=3),  # 高斯模糊
     transforms.ToTensor(),  # 将图片转换为Tensor
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])  # 标准化处理
 ])
@@ -55,7 +57,7 @@ transform = transforms.Compose([
 # 加载训练数据和测试数据
 train_dataset = datasets.ImageFolder(root='fruitdatasets_split/train', transform=transform)
 test_dataset = datasets.ImageFolder(root='fruitdatasets_split/test', transform=transform)
-
+# 创建数据加载器
 train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
 
@@ -78,8 +80,9 @@ class FruitNet(nn.Module):
             nn.Linear(512, num_classes)  # 最后的全连接层
         )
 
+
     def forward(self, x):
-        x = self.model(x)
+        x = self.model(x) # 输入数据通过模型
         return x
 
 
@@ -108,7 +111,7 @@ lr_scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=2, 
 # 参数optimizer：优化器
 # step_size=3：步长，以3为步长
 # gamma=0.5：因子，以0.5为步长下降
-step_scheduler = StepLR(optimizer, step_size=3, gamma=0.5)
+step_scheduler = StepLR(optimizer, step_size=7, gamma=0.5)
 
 # 定义指数调度器 86%
 # exp_scheduler：指数调度器
@@ -159,8 +162,8 @@ print(classification_report(all_labels, all_preds, target_names=train_dataset.cl
 
 # 更新学习率
 lr_scheduler.step(cnn_accuracy)
-#step_scheduler.step()
-#exp_scheduler.step()
+# step_scheduler.step()
+# exp_scheduler.step()
 
 # 保存模型
 # torch.save(model.state_dict(), 'cnn_fruit_classifier.pth')
