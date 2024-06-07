@@ -88,6 +88,9 @@ knn_accuracy = accuracy_score(test_labels, knn_predictions) # 计算准确率
 
 print(f'KNN Accuracy: {knn_accuracy:.2f}%')
 
-# 计算分类指标
-print("KNN Classification Report")
-print(classification_report(test_labels, knn_predictions, target_names=train_dataset.classes))
+# 保存评估结果到文件
+accuracy_save_path = 'knn_accuracy.txt'
+with open(accuracy_save_path, 'w') as f:
+    f.write(f'KNN Accuracy: {knn_accuracy:.2f}%\n')
+    f.write("KNN Classification Report\n")
+    f.write(classification_report(test_labels, knn_predictions, target_names=train_dataset.classes))

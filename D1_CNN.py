@@ -39,12 +39,11 @@ import numpy as np
 # 定义超参数
 batch_size = 16
 learning_rate = 0.001
-epochs = 50
+epochs = 10
 num_classes = 10
 
 # 数据预处理：转换为torch张量，并标准化
 transform = transforms.Compose([
-    transforms.Resize((224, 224)),  # 调整图像大小
     transforms.RandomHorizontalFlip(),  # 随机水平翻转
     transforms.RandomRotation(10),  # 随机旋转
     transforms.RandomVerticalFlip(),  # 随机垂直翻转
@@ -156,9 +155,12 @@ with torch.no_grad():  # 在不需要计算梯度的情况下执行，节省内�
 cnn_accuracy = 100 * sum(np.array(all_preds) == np.array(all_labels)) / len(all_labels)
 print(f'CNN Accuracy: {cnn_accuracy:.2f}%')
 
-# 计算分类指标
-print("CNN Classification Report")
-print(classification_report(all_labels, all_preds, target_names=train_dataset.classes))
+# 保存评估结果到文件
+accuracy_save_path = 'cnn_accuracy.txt'
+with open(accuracy_save_path, 'w') as f:
+    f.write(f'CNN Accuracy: {cnn_accuracy:.2f}%\n')
+    f.write("CNN Classification Report\n")
+    f.write(classification_report(all_labels, all_preds, target_names=train_dataset.classes))
 
 # 更新学习率
 lr_scheduler.step(cnn_accuracy)

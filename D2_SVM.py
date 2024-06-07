@@ -91,6 +91,9 @@ svm_accuracy = accuracy_score(test_labels, svm_predictions) # 计算准确率
 
 print(f'SVM Accuracy: {svm_accuracy:.2f}%')
 
-# 计算分类指标
-print("SVM Classification Report")
-print(classification_report(test_labels, svm_predictions, target_names=train_dataset.classes))
+# 保存评估结果到文件
+accuracy_save_path = 'svm_accuracy.txt'
+with open(accuracy_save_path, 'w') as f:
+    f.write(f'SVM Accuracy: {svm_accuracy:.2f}%\n')
+    f.write("SVM Classification Report\n")
+    f.write(classification_report(test_labels, svm_predictions, target_names=train_dataset.classes))
