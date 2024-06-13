@@ -29,7 +29,7 @@ for fruit in classes:
     os.mkdir(os.path.join(dataset_path, 'test', fruit))
 
 test_frac = 0.2  # 测试集比例
-random.seed(123) # 随机数种子，便于复现
+random.seed(125) # 随机数种子，便于复现
 
 # 初始化数据统计表
 df = pd.DataFrame()

@@ -23,6 +23,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from torchvision import models, datasets, transforms
 from torch.utils.data import DataLoader
 import numpy as np
+import pandas as pd
+
 
 # 设备配置
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -32,16 +34,26 @@ print(f'Using {device} device')
 batch_size = 16 # 批量大小
 num_classes = 10 # 类别数
 
-# 数据预处理：转换为torch张量，并标准化
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),  # 调整图像大小
-    transforms.ToTensor(),  # 将图片转换为Tensor
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])  # 标准化处理
-])
+# 数据预处理
+# 训练集图像预处理：缩放裁剪、图像增强、转 Tensor、归一化
+train_transform = transforms.Compose([transforms.RandomResizedCrop(224), # 随机裁剪
+                                      transforms.RandomHorizontalFlip(), # 随机水平翻转
+                                      transforms.ToTensor(), # 转 Tensor
+                                      transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]) # 归一化
+                                     ])
+
+# 测试集图像预处理-RCTN：缩放、裁剪、转 Tensor、归一化
+test_transform = transforms.Compose([transforms.Resize(256), # 缩放
+                                     transforms.CenterCrop(224), # 中心裁剪
+                                     transforms.ToTensor(), # 转 Tensor
+                                     transforms.Normalize(
+                                         mean=[0.485, 0.456, 0.406],
+                                         std=[0.229, 0.224, 0.225]) # 归一化
+                                    ])
 
 # 加载训练数据和测试数据
-train_dataset = datasets.ImageFolder(root='fruitdatasets_split/train', transform=transform)
-test_dataset = datasets.ImageFolder(root='fruitdatasets_split/test', transform=transform)
+train_dataset = datasets.ImageFolder(root='fruitdatasets_split/train', transform=train_transform)
+test_dataset = datasets.ImageFolder(root='fruitdatasets_split/test', transform=test_transform)
 
 train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
@@ -89,8 +101,14 @@ knn_accuracy = accuracy_score(test_labels, knn_predictions) # 计算准确率
 print(f'KNN Accuracy: {knn_accuracy:.2f}%')
 
 # 保存评估结果到文件
-accuracy_save_path = 'knn_accuracy.txt'
+accuracy_save_path = 'csv/knn_accuracy.csv'
 with open(accuracy_save_path, 'w') as f:
-    f.write(f'KNN Accuracy: {knn_accuracy:.2f}%\n')
-    f.write("KNN Classification Report\n")
     f.write(classification_report(test_labels, knn_predictions, target_names=train_dataset.classes))
+
+# 生成分类报告
+class_report = classification_report(test_labels, knn_predictions, target_names=train_dataset.classes, output_dict=True)
+class_report_df = pd.DataFrame(class_report).transpose()
+
+# 保存分类报告为CSV文件
+report_save_path = 'csv/knn_classification_report.csv'
+class_report_df.to_csv(report_save_path, index=True,header=True)

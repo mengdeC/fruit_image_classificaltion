@@ -35,27 +35,34 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import classification_report
 from torch.optim.lr_scheduler import ReduceLROnPlateau, StepLR, ExponentialLR
 import numpy as np
+import pandas as pd
 
 # 定义超参数
 batch_size = 16
 learning_rate = 0.001
-epochs = 10
+epochs = 30
 num_classes = 10
 
-# 数据预处理：转换为torch张量，并标准化
-transform = transforms.Compose([
-    transforms.RandomHorizontalFlip(),  # 随机水平翻转
-    transforms.RandomRotation(10),  # 随机旋转
-    transforms.RandomVerticalFlip(),  # 随机垂直翻转
-    transforms.RandomAffine(10),  # 随机仿射变换
-    transforms.GaussianBlur(kernel_size=3),  # 高斯模糊
-    transforms.ToTensor(),  # 将图片转换为Tensor
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])  # 标准化处理
-])
+# 数据预处理
+# 训练集图像预处理：缩放裁剪、图像增强、转 Tensor、归一化
+train_transform = transforms.Compose([transforms.RandomResizedCrop(224), # 随机裁剪
+                                      transforms.RandomHorizontalFlip(), # 随机水平翻转
+                                      transforms.ToTensor(), # 转 Tensor
+                                      transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]) # 归一化
+                                     ])
+
+# 测试集图像预处理-RCTN：缩放、裁剪、转 Tensor、归一化
+test_transform = transforms.Compose([transforms.Resize(256), # 缩放
+                                     transforms.CenterCrop(224), # 中心裁剪
+                                     transforms.ToTensor(), # 转 Tensor
+                                     transforms.Normalize(
+                                         mean=[0.485, 0.456, 0.406], 
+                                         std=[0.229, 0.224, 0.225]) # 归一化
+                                    ])
 
 # 加载训练数据和测试数据
-train_dataset = datasets.ImageFolder(root='fruitdatasets_split/train', transform=transform)
-test_dataset = datasets.ImageFolder(root='fruitdatasets_split/test', transform=transform)
+train_dataset = datasets.ImageFolder(root='fruitdatasets_split/train', transform=train_transform)
+test_dataset = datasets.ImageFolder(root='fruitdatasets_split/test', transform=test_transform)
 # 创建数据加载器
 train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
@@ -66,11 +73,9 @@ class FruitNet(nn.Module):
     def __init__(self, num_classes):
         super(FruitNet, self).__init__()
         self.model = models.resnet18(pretrained=True)  # 使用预训练的ResNet18模型
-
         # 冻结预训练模型的参数
         for param in self.model.parameters():
             param.requires_grad = False
-
         # 修改最后的全连接层
         self.model.fc = nn.Sequential(
             nn.Linear(self.model.fc.in_features, 512),  # 添加一个线性层
@@ -78,8 +83,6 @@ class FruitNet(nn.Module):
             nn.Dropout(0.5),  # Dropout层，防止过拟合
             nn.Linear(512, num_classes)  # 最后的全连接层
         )
-
-
     def forward(self, x):
         x = self.model(x) # 输入数据通过模型
         return x
@@ -91,33 +94,14 @@ print(f'Using {device} device')
 
 # 创建模型实例并移动到设备
 model = FruitNet(num_classes=num_classes).to(device)
+
+# 定义损失函数和优化器
 criterion = nn.CrossEntropyLoss()  # 交叉熵损失函数
+
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)  # Adam优化器
 
-# 定义学习率调度器 88%
-# lr_scheduler：学习率调度器
-# ReduceLROnPlateau：减少学习率调度器
-# 参数optimizer：优化器
-# mode='max'：模式，以最大化指标为准
-# factor=0.5：因子，以0.5为步长下降
-# patience=2：容忍度，当指标不再改善的次数
-# verbose=True：是否打印信息
-lr_scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=2, verbose=True)
-
-# 定义步长调度器 85%
-# step_scheduler：步长调度器
-# StepLR：步长调度器
-# 参数optimizer：优化器
-# step_size=3：步长，以3为步长
-# gamma=0.5：因子，以0.5为步长下降
+# 定义学习率调度器
 step_scheduler = StepLR(optimizer, step_size=7, gamma=0.5)
-
-# 定义指数调度器 86%
-# exp_scheduler：指数调度器
-# ExponentialLR：指数调度器
-# 参数optimizer：优化器
-# gamma=0.95：因子，以0.95为指数下降
-exp_scheduler = ExponentialLR(optimizer, gamma=0.95)
 
 # 训练模型
 for epoch in range(epochs):
@@ -135,6 +119,10 @@ for epoch in range(epochs):
         running_loss += loss.item()
 
     print(f'Epoch {epoch + 1}, Loss: {running_loss / len(train_loader)}')
+
+    # 每训练完一个epoch，更新学习率
+    step_scheduler.step()
+    # exp_scheduler.step()
 
     # 清理未使用的变量以释放内存
     del data, target, output
@@ -155,17 +143,20 @@ with torch.no_grad():  # 在不需要计算梯度的情况下执行，节省内�
 cnn_accuracy = 100 * sum(np.array(all_preds) == np.array(all_labels)) / len(all_labels)
 print(f'CNN Accuracy: {cnn_accuracy:.2f}%')
 
-# 保存评估结果到文件
-accuracy_save_path = 'cnn_accuracy.txt'
-with open(accuracy_save_path, 'w') as f:
-    f.write(f'CNN Accuracy: {cnn_accuracy:.2f}%\n')
-    f.write("CNN Classification Report\n")
-    f.write(classification_report(all_labels, all_preds, target_names=train_dataset.classes))
+# 清理未使用的变量以释放内存
+del data, target, output
+torch.cuda.empty_cache()
 
 # 更新学习率
-lr_scheduler.step(cnn_accuracy)
-# step_scheduler.step()
-# exp_scheduler.step()
+# lr_scheduler.step(cnn_accuracy)
+
+# 生成分类报告
+class_report = classification_report(all_labels, all_preds, target_names=train_dataset.classes, output_dict=True)
+class_report_df = pd.DataFrame(class_report).transpose()
+
+# 保存分类报告为CSV文件
+report_save_path = 'csv/cnn_classification_report.csv'
+class_report_df.to_csv(report_save_path, index=True,header=True)
 
 # 保存模型
 # torch.save(model.state_dict(), 'cnn_fruit_classifier.pth')

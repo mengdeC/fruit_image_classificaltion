@@ -38,7 +38,7 @@ def clean_and_preprocess_images(dataset_path, output_path):
                 else:
                     # 转换图像格式和尺寸
 
-                    output_img = cv2.resize(img, (224, 224))  # 调整尺寸为224x224
+                    output_img = cv2.resize(img, (256,256))
 
                     # 保存转换和调整后的图像文件
                     output_file_path = os.path.join(output_fruit_path, file)
